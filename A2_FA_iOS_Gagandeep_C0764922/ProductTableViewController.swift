@@ -10,13 +10,18 @@ import CoreData
 
 class ProductTableViewController: UITableViewController,UISearchBarDelegate {
     @IBOutlet weak var searchBar: UISearchBar!
+    @IBOutlet weak var segment: UISegmentedControl!
     let context =
         (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     var products : [Product] = []
+    var provider : [Provider] = []
     override func viewDidLoad() {
         super.viewDidLoad()
         getProducts()
         
+    }
+    override func viewWillAppear(_ animated: Bool) {
+        change(self)
     }
     func getProducts(){
         products = []
@@ -73,63 +78,115 @@ class ProductTableViewController: UITableViewController,UISearchBarDelegate {
             p23.productName = "plan"
             p23.productPrice = "400"
             p23.provider = provider2
-            
-            let provider3 = Provider(context: context)
-            provider3.provider = "BMW"
-            
-            let p31 = Product(context: context)
-            p31.productDesc = "p1dis"
-            p31.productID = "001"
-            p31.productName = "bike"
-            p31.productPrice = "100"
-            p31.provider = provider3
-            
-            let p32 = Product(context: context)
-            p32.productDesc = "p1dis"
-            p32.productID = "002"
-            p32.productName = "car"
-            p32.productPrice = "300"
-            p32.provider = provider3
-            
-            let p33 = Product(context: context)
-           p33.productDesc = "p1dis"
-           p33.productID = "003"
-           p33.productName = "plane"
-           p33.productPrice = "400"
-           p33.provider = provider3
-            
-            let p34 = Product(context: context)
-            p34.productDesc = "p1dis"
-            p34.productID = "001"
-            p34.productName = "Helicopter"
-            p34.productPrice = "100"
-            p34.provider = provider3
             try! context.save()
             getProducts()
         }
     }
-    
+    //Final exam
+    @IBAction func change(_ sender: Any) {
+        if segment.selectedSegmentIndex == 0{
+            getProducts()
+            searchBar.isHidden = false
+        }
+        else{
+            getProvider()
+            searchBar.isHidden = true
+        }
+    }
+    @IBAction func add(_ sender: Any) {
+        if segment.selectedSegmentIndex == 0{
+            performSegue(withIdentifier: "addProduct", sender: self)
+        }
+        else{
+            performSegue(withIdentifier: "addProvider", sender: self)
+        }
+    }
+    func getProvider(){
+        provider = []
+        provider = try! context.fetch(Provider.fetchRequest())
+        tableView.reloadData()
+    }
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if let _ = sender as? String{
+            if segment.selectedSegmentIndex == 0{
+                let vc = segue.destination as! AddProductTableViewController
+                vc.selectedProduct = products[tableView.indexPathForSelectedRow!.row]
+            }
+            else{
+                let vc = segue.destination as! GetProductsTableViewController
+                vc.selectedProvider = provider[tableView.indexPathForSelectedRow!.row]
+            }
+        }
+    }
     // MARK: - Table view data source
     
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
+        if segment.selectedSegmentIndex == 0{
             return products.count
-        
+        }
+        else{
+            return provider.count
+        }
     }
     
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
-       
+        if segment.selectedSegmentIndex == 0{
             cell.textLabel?.text =
                 products[indexPath.row].productName
             cell.detailTextLabel?.text = products[indexPath.row].provider?.provider
-       
+        }
+        else{
+            cell.textLabel?.text =
+                provider[indexPath.row].provider
+            let req : NSFetchRequest<Product> = Product.fetchRequest()
+            //req.predicate =  NSPredicate(format: "provider = '\(provider[indexPath.row].provider!)'")
+            let productz = try! context.fetch(req)
+            var count = 0
+            for pro in productz{
+                if pro.provider?.provider == provider[indexPath.row].provider{
+                    count = count + 1
+                }
+            }
+            cell.detailTextLabel?.text = count.description
+        }
+        
         return cell
     }
     
     
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        if segment.selectedSegmentIndex == 0{
+            performSegue(withIdentifier: "addProduct", sender: "me")
+        }
+        else{
+            performSegue(withIdentifier: "getProduct", sender: "me")
+        }
+    }
+    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete{
+            if segment.selectedSegmentIndex == 0{
+                let pro = products[indexPath.row]
+                context.delete(pro)
+            }
+            else{
+                for prod in products{
+                    if prod.provider == provider[indexPath.row]{
+                        context.delete(prod)
+                    }
+                }
+                let pro = provider[indexPath.row]
+                context.delete(pro)
+                
+            }
+            try! context.save()
+            change(self)
+            
+        }
+    }
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         if !searchText.isEmpty {
             var predicate: NSPredicate = NSPredicate()
