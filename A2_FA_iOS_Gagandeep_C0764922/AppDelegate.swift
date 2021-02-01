@@ -2,9 +2,8 @@
 //  AppDelegate.swift
 //  A2_FA_iOS_Gagandeep_C0764922
 //
-//  Created by parneet sandhu on 2021-02-01.
+//  Created by Gagandeep on 1/31/21.
 //
-
 import UIKit
 import CoreData
 
@@ -41,7 +40,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
          application to it. This property is optional since there are legitimate
          error conditions that could cause the creation of the store to fail.
         */
-        let container = NSPersistentContainer(name: "A2_FA_iOS_Gagandeep_C0764922")
+        let container = NSPersistentContainer(name: "ProductsModel")
         container.loadPersistentStores(completionHandler: { (storeDescription, error) in
             if let error = error as NSError? {
                 // Replace this implementation with code to handle the error appropriately.
@@ -78,4 +77,3 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
 }
-
